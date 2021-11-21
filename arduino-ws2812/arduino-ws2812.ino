@@ -27,6 +27,9 @@
 #define DATA_PIN 4
 CRGB leds[NUM_LEDS];
 
+//other defines
+#define GRAD_STEPS = 250;
+
 int redVal = 0;
 int greenVal = 0;
 int blueVal = 0;
@@ -39,18 +42,19 @@ volatile bool buttonPress = 0;
 bool LEDState[NUM_LEDS];
 long stateCompare = 0x00000001;
 
-long currentState = 0x000001AD; //must be non-zero for lfsr cycle to work
+long currentState = 0x000001BF; //must be non-zero for lfsr cycle to work
 long tempState = 0x0;           //for validating a working state
 
 // colorList[numColors, color1, color2, color3, color4, color5, color6, color7]
 // Each complete color needs 24 bits, longs required, use hex to more easily work with them.
 // start color list at Christmas theme
 long colorList[8] = {3, 0x00FF0000, 0x0000FF00, 0x00DCDCDC, 0x0, 0x0, 0x0, 0x0};
-int colorTheme = 13;   //color theme of the colors
-int colorMode = 0;     //color mode for animations (currently unused)
+int colorTheme = 13;          //color theme of the colors
+int colorMode = 0;            //color mode for animations (currently unused)
 int colorPick = 0;
-
-int minLED = 5;        //minimum number of LEDs that must be lit
+int minLED = (NUM_LEDS*2)/3;  //minimum number of LEDs active for a theme
+int LEDtotal = 0;
+long LEDmask = 0x0;
 
 // The lastColorState array contains the last color state of the LEDs.  Similar
 //  to the targetColorState, though it is trivial when the LEDs are simply
@@ -74,11 +78,11 @@ const byte intPin = 2;
 //ADC config
 const int ADCPin = A1;
 int ADCValue = 0;
-int voltageMin = 1000;
-int voltageMax = 0;
-int voltageAvg = 0;
+//int voltageMin = 1000;
+//int voltageMax = 0;
+//int voltageAvg = 0;
 
-int DisplayInterrupt = 0;
+//int DisplayInterrupt = 0;
 
 
 void setup() {
@@ -96,6 +100,27 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(intPin), colorGrpISR, FALLING);
 
   Serial.begin(9600);
+
+  //needs to read in once 
+  ADCValue = analogRead(ADCPin);
+
+  //create an LED mask
+  stateCompare = 0x00000001;  //reset stateCompare before use
+  for (int i = 0; i < NUM_LEDS; i++){
+    LEDmask = LEDmask | stateCompare;
+    stateCompare = stateCompare << 1;
+  }
+
+  //initialize color states
+  for (int i = 0; i < NUM_LEDS; i++){
+    currentColorState[i] = 0x0;
+    lastColorState[i] = 0x0;
+    targetColorState[i] = 0x0;
+  }
+
+  Serial.print("LEDmask: ");
+  Serial.println(LEDmask, HEX);
+  Serial.println(" ");
 
 }
 
@@ -177,7 +202,7 @@ void wheel(int &redVal, int &greenVal, int &blueVal){
 void colorGrpISR(){
   
   //quick debounce delay
-  delayMicroseconds(5000);
+  delayMicroseconds(50000);
   
   buttonPress = 1;
 
@@ -205,12 +230,14 @@ void nextTheme(){
       colorList[1] = 0x00800080;  //Purple
       colorList[2] = 0x00FFD700;  //Gold
       colorList[3] = 0x00C0C0C0;  //Silver
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 1:
       //Winter
       colorList[0] = 0x00000002;
       colorList[1] = 0x0087CEEB;  //SkyBlue
       colorList[2] = 0x00FFFFFF;  //White
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 2:
       //Valentine's
@@ -219,6 +246,7 @@ void nextTheme(){
       colorList[2] = 0x00FF69B4;  //HotPink
       colorList[3] = 0x00C0C0C0;  //Silver
       colorList[4] = 0x00FF00FF;  //Magenta
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 3:
       //St. Patrick's
@@ -227,6 +255,7 @@ void nextTheme(){
       colorList[2] = 0x00006400;  //DarkGreen
       colorList[3] = 0x00D3D3D3;  //LightGray
       colorList[4] = 0x00FFD700;  //Gold
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 4:
       //Easter
@@ -235,6 +264,7 @@ void nextTheme(){
       colorList[2] = 0x00FFFFE0;  //LightYellow
       colorList[3] = 0x0090EE90;  //LightGreen
       colorList[4] = 0x00AFEEEE;  //PaleTurquoise
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 5:
       //Spring
@@ -242,6 +272,7 @@ void nextTheme(){
       colorList[1] = 0x00FFC0CB;  //Pink
       colorList[2] = 0x00FFFF00;  //Yellow
       colorList[3] = 0x0000FF7F;  //SpringGreen
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 6:
       //USA
@@ -249,6 +280,7 @@ void nextTheme(){
       colorList[1] = 0x00FF0000;  //Red
       colorList[2] = 0x00DCDCDC;  //Gainsboro
       colorList[3] = 0x000000FF;  //Blue
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 7:
       //Summer
@@ -256,6 +288,7 @@ void nextTheme(){
       colorList[1] = 0x007CFC00;  //LawnGreen
       colorList[2] = 0x00228B22;  //ForestGreen
       colorList[3] = 0x00FAFAD2;  //LightGoldenRodYellow
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 8:
       //Fall
@@ -264,6 +297,7 @@ void nextTheme(){
       colorList[2] = 0x00FF7F50;  //Coral
       colorList[3] = 0x00E9967A;  //DarkSalmon
       colorList[4] = 0x00FFE4B5;  //Moccasin
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 9:
       //Halloween
@@ -272,6 +306,7 @@ void nextTheme(){
       colorList[2] = 0x0032CD32;  //LimeGreen
       colorList[3] = 0x00800080;  //Purple
       colorList[4] = 0x00A9A9A9;  //DarkGray
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 10:
       //Thanksgiving
@@ -279,6 +314,7 @@ void nextTheme(){
       colorList[1] = 0x008B4513;  //SaddleBrown
       colorList[2] = 0x00FFA500;  //Orange
       colorList[3] = 0x00EEE8AA;  //PaleGoldenrod
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 11:
       //Christmas
@@ -286,6 +322,7 @@ void nextTheme(){
       colorList[1] = 0x00FF0000;  //Red
       colorList[2] = 0x0000FF00;  //Lime
       colorList[3] = 0x00DCDCDC;  //Gainsboro
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 12:
       //Rainbow
@@ -297,21 +334,28 @@ void nextTheme(){
       colorList[5] = 0x000000FF;  //Blue
       colorList[6] = 0x004B0082;  //Indigo
       colorList[7] = 0x00FF00FF;  //Magenta
+      minLED = (NUM_LEDS*2)/3;
       break;
     case 13:
       //White Lantern
-      colorList[0] = 0x00000001;
+      colorList[0] = 0x00000002;
       colorList[1] = 0x00FAFAFA;  //Snow
+      colorList[2] = 0x00FAFAFA;  //Snow
+      minLED = NUM_LEDS;
       break;
     case 14:
       //Red Lantern
-      colorList[0] = 0x00000001;
+      colorList[0] = 0x00000002;
       colorList[1] = 0x00FF0000;  //Red
+      colorList[2] = 0x00FF0000;  //Red
+      minLED = NUM_LEDS;
       break;
     case 15:
       //Orange Blink
-      colorList[0] = 0x00000001;
-      colorList[1] = 0x00FFA500;  //Orange
+      colorList[0] = 0x00000002;
+      colorList[1] = 0x00FF4500;  //OrangeRed
+      colorList[2] = 0x00FF4500;  //OrangeRed
+      minLED = NUM_LEDS;
       break;
   }
 
@@ -345,12 +389,38 @@ void nextTheme(){
   }
   FastLED.show();
   
-  delay(100);
+  delay(1000);
 
   //reset interrupt flag
   buttonPress = 0;
     
 }//end nextTheme
+
+// lfsr function
+// This function takes a 16 bit number and runs a series of linear feedback shift
+//  operations on it. The next state it finds is guaranteed to be different than
+//  the start state it was given.
+// Arguments: 32 bit integer representing an input start state
+// Returns:   32 bit integer representing the next state
+long lfsr(long start){
+
+    long state = start;  // Initially set the current state to the start state
+
+  //example set of shift operations
+  //state ^= state >> 7;  // 0b10110001 XOR with 0b00000001
+  //state ^= state << 3;  // 0b10110000 XOR with 0b10000000
+  //state ^= state >> 2;  // 0b00110000 XOR with 0b00001100
+              // end result state = 0b00111100
+
+    // These shift operations result in 65535 states before returning to the start state.
+
+  state ^= state >> 7;
+  state ^= state << 9;
+  state ^= state >> 13;
+
+  return state; // Return the next state found
+
+}//end lfsr function
 
 // Extracts and returns the red component of a packed color
 int getRed(long packedColor){
@@ -424,69 +494,146 @@ void loop() {
 //    leds[i] = CRGB(redVal, greenVal, blueVal);
 //  }
 
-  //get voltage readings
-  ADCValue = analogRead(ADCPin);
-//  if (voltageMin > ADCValue){
-//    voltageMin = ADCValue;
-//  }
-//  if (voltageMax < ADCValue){
-//    voltageMax = ADCValue;
-//  }
-//  voltageAvg = (float)voltageAvg*((float)DisplayInterrupt - 1.0)/(float)DisplayInterrupt + (float)ADCValue*(1.0/(float)DisplayInterrupt);
-
-  DisplayInterrupt++;
-  delay(40);
-
-  if (DisplayInterrupt >= 128){
-    //output data to serial
-//    Serial.print("ADC Min/Max Avg: ");
-//    Serial.print(voltageMin);
-//    Serial.print("/");
-//    Serial.print(voltageMax);
-//    Serial.print(" ");
-//    Serial.print(voltageAvg);
-//    Serial.println(" ");
-    Serial.print("Color Theme/Qty  ");
-    Serial.print(colorTheme);
-    Serial.print("/");
-    Serial.println(colorList[0]);
-    Serial.print("LED State:       ");
-    
-    for (int i = 0; i < NUM_LEDS; i++){
-      Serial.print(LEDState[i]);
-      Serial.print(" ");
-    }
-    Serial.println(" ");
-    Serial.print("currentState:    ");
-    Serial.print(currentState, HEX);
-    Serial.print(" ");
-    Serial.println(currentState, BIN);
-    Serial.println(" ");
-    DisplayInterrupt = 1;
-    voltageMin = 1023;
-    voltageMax = 0;
-  }
-
-
   //Check for button pressed to advance to next theme
   if (buttonPress) nextTheme();
-
+  
+  //reset stateCompare
+  stateCompare = 0x00000001;
   // Set LEDState array values from state
   for (int i = 0; i < NUM_LEDS; i++){
     LEDState[i] = ((currentState & stateCompare) == stateCompare);
     stateCompare = stateCompare << 1;
   }
-  
-  //reset stateCompare
-  stateCompare = 0x00000001; 
+  Serial.print("LEDstate: ");
+  Serial.print(LEDState[0]);
+  Serial.print(LEDState[1]);
+  Serial.print(LEDState[2]);
+  Serial.print(LEDState[3]);
+  Serial.print(LEDState[4]);
+  Serial.println(LEDState[5]);
 
+  //set targetColorState array from lastColorState
+  for (int i = 0; i < NUM_LEDS; i++){
+
+    if (LEDState[i]){   //LED is on, needs to select a color
+      colorPick = 0;
+      //pick random color
+      while (colorPick == 0){
+
+        //get random value from ADC
+        ADCValue = analogRead(ADCPin);
+
+        ADCValue = (ADCValue & 0x07);
+
+        if ((ADCValue > colorList[0]) || (ADCValue == 0)){
+          continue; //ADC value out of bounds, pick new number
+        }
+
+        //use this (hopefully) random number to select a random color
+        targetColorState[i] = colorList[ADCValue];
+        colorPick = 1;  //color selected, exit
+        
+      }//end colorPick while
+    }//end LEDState if
+    else{
+      targetColorState[i] = 0x0;  //LED off
+    }
+  }//end targetColorState for loop
+
+
+  //BLINKY Code
+  //Simply blinks to the new LED state and colors
+  for (int k = 0; k < NUM_LEDS; k++){
+    currentColorState[k] = targetColorState[k];
+  }
+
+  //set the colors in the led array
+  for (int led = 0; led < NUM_LEDS; led++){
+    redVal = getRed(currentColorState[led]);
+    greenVal = getGreen(currentColorState[led]);
+    blueVal = getBlue(currentColorState[led]);
+    leds[led] = CRGB(redVal, greenVal, blueVal);
+  }
+
+  //GRADIENT Code
+  // Moves in a smooth gradient from the current color state to the target color state
+
+  //set the current color to what the last color was
+  for (int j = 0; j < NUM_LEDS; j++){
+    currentColorState[j] = lastColorState[j];
+  }
+
+  //LED State Code
+  // Create a new LED state combination
   
+  //reset the number of active LEDs
+  LEDtotal = 0;
+  Serial.print("minLED: ");
+  Serial.println(minLED);
   
+  //need some minimum number LEDs active for the theme
+  while (LEDtotal < minLED){
+
+    LEDtotal = 0;
+
+    if (minLED == NUM_LEDS){
+      currentState = LEDmask;  //all LEDs on, just set the state
+    }
+    else{
+      currentState = lfsr(currentState);  //get new state
+    }
+
+    //reset stateCompare
+    stateCompare = 0x00000001;
+    //total up the sum of digits, representing the number of active LEDs
+    for (int led = 0; led < NUM_LEDS; led++){
+      if ((currentState & stateCompare) == stateCompare) LEDtotal++;
+      stateCompare = stateCompare << 1;
+    }
+    Serial.print("LEDtotal: ");
+    Serial.println(LEDtotal);
+
+    if (minLED == NUM_LEDS);  //all LEDs on, don't worry about duplicates
+    //if a next duplicate state is encountered when using a the LED mask, try again
+    else if ((currentState & LEDmask) == (tempState & LEDmask)){
+      LEDtotal = 0;
+      Serial.print("duplicate: ");
+      Serial.print((currentState & LEDmask), HEX);
+      Serial.print(" ");
+      Serial.println((tempState & LEDmask), HEX);
+      Serial.println(" ");
+    }
+    
+  }//end LFSR while loop
+
+  //found a good state, save it in case it gets duplicated in the next one
+  Serial.print("currentState: ");
+  Serial.print(currentState, HEX);
+  Serial.print(" ");
+  Serial.println(currentState, BIN);
+  Serial.println(" ");
+  tempState = currentState;
+
+  //save a new lastColorState and update currentColorState
+  for (int j = 0; j < NUM_LEDS; j++){
+    lastColorState[j] = targetColorState[j];
+    currentColorState[j] = targetColorState[j]; //possibly redundant
+  }
+
+
 
 
 
 
   FastLED.show();
   
+  //three second delay 60*50
+  // This could be handled with a potentiometer in the future
+  for (int d = 0; d < 60; d++){
+    delay(50);
+    if (buttonPress) break; //exit loop if button to change theme has been pressed
+  }
+  
+
 
 }
