@@ -22,17 +22,29 @@
 
 #include <FastLED.h>
 
-// FastLED setup
+// FastLED defines
 #define NUM_LEDS 6
 #define DATA_PIN 4
-CRGB leds[NUM_LEDS];
 
 //other defines
-#define GRAD_STEPS = 250;
+#define GRAD_STEPS 255
+
+//the led strip
+CRGB leds[NUM_LEDS];
+
+
 
 int redVal = 0;
 int greenVal = 0;
 int blueVal = 0;
+
+int tempRval = 0;
+int tempGval = 0;
+int tempBval = 0;
+
+int targetRval = 0;
+int targetGval = 0;
+int targetBval = 0;
 
 // Flag to note when the button has been pressed.
 volatile bool buttonPress = 0;
@@ -442,6 +454,12 @@ int getBlue(long packedColor){
   return (int)blue;
 }
 
+// Returns a packColor value from RGB components
+long packColor(int red, int green, int blue){
+  long RGBval = 0;
+  RGBval = ((long) red << 16 | ((long) green << 8) | (long) blue);
+  return RGBval;
+}
 
 void loop() {
 
@@ -541,19 +559,19 @@ void loop() {
   }//end targetColorState for loop
 
 
-  //BLINKY Code
-  //Simply blinks to the new LED state and colors
-  for (int k = 0; k < NUM_LEDS; k++){
-    currentColorState[k] = targetColorState[k];
-  }
-
-  //set the colors in the led array
-  for (int led = 0; led < NUM_LEDS; led++){
-    redVal = getRed(currentColorState[led]);
-    greenVal = getGreen(currentColorState[led]);
-    blueVal = getBlue(currentColorState[led]);
-    leds[led] = CRGB(redVal, greenVal, blueVal);
-  }
+//  //BLINKY Code
+//  //Simply blinks to the new LED state and colors
+//  for (int k = 0; k < NUM_LEDS; k++){
+//    currentColorState[k] = targetColorState[k];
+//  }
+//
+//  //set the colors in the led array
+//  for (int led = 0; led < NUM_LEDS; led++){
+//    redVal = getRed(currentColorState[led]);
+//    greenVal = getGreen(currentColorState[led]);
+//    blueVal = getBlue(currentColorState[led]);
+//    leds[led] = CRGB(redVal, greenVal, blueVal);
+//  }
 
   //GRADIENT Code
   // Moves in a smooth gradient from the current color state to the target color state
@@ -561,6 +579,59 @@ void loop() {
   //set the current color to what the last color was
   for (int j = 0; j < NUM_LEDS; j++){
     currentColorState[j] = lastColorState[j];
+  }
+
+  //the gradient is carried out over GRAD_STEPS number of steps
+  for (int g = 0; g < GRAD_STEPS; g++){
+
+    //within each gradient step, set up each color step
+    for (int v = 0; v < NUM_LEDS; v++){
+      tempRval = getRed(currentColorState[v]);
+      tempGval = getGreen(currentColorState[v]);
+      tempBval = getBlue(currentColorState[v]);
+
+      targetRval = getRed(targetColorState[v]);
+      targetGval = getGreen(targetColorState[v]);
+      targetBval = getBlue(targetColorState[v]);
+
+      //compare Red values
+      if (tempRval > targetRval){
+        tempRval--;
+      }
+      else if (tempRval < targetRval){
+        tempRval++;
+      }
+
+      //compare Green values
+      if (tempGval > targetGval){
+        tempGval--;
+      }
+      else if (tempGval < targetGval){
+        tempGval++;
+      }
+
+      //compare Blue values
+      if (tempBval > targetBval){
+        tempBval--;
+      }
+      else if (tempBval < targetBval){
+        tempBval++;
+      }
+
+      //repack the color
+      currentColorState[v] = packColor(tempRval, tempGval, tempBval);
+      
+    }//end color setup for loop
+
+    //write the colors
+    for (int led = 0; led < NUM_LEDS; led++){
+      redVal = getRed(currentColorState[led]);
+      greenVal = getGreen(currentColorState[led]);
+      blueVal = getBlue(currentColorState[led]);
+      leds[led] = CRGB(redVal, greenVal, blueVal);
+    }
+    FastLED.show();
+    //delay(4);
   }
 
   //LED State Code
@@ -625,7 +696,7 @@ void loop() {
 
 
 
-  FastLED.show();
+  //FastLED.show();
   
   //three second delay 60*50
   // This could be handled with a potentiometer in the future
