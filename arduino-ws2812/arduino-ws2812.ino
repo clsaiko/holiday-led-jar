@@ -61,7 +61,7 @@ long tempState = 0x0;           //for validating a working state
 // Each complete color needs 24 bits, longs required, use hex to more easily work with them.
 // start color list at Christmas theme
 long colorList[8] = {3, 0x00FF0000, 0x0000FF00, 0x00DCDCDC, 0x0, 0x0, 0x0, 0x0};
-int colorTheme = 13;          //color theme of the colors
+int colorTheme = 11;          //color theme of the colors, default Christmas
 int colorMode = 0;            //color mode for animations (currently unused)
 int colorPick = 0;
 int minLED = (NUM_LEDS*2)/3;  //minimum number of LEDs active for a theme
@@ -214,7 +214,7 @@ void wheel(int &redVal, int &greenVal, int &blueVal){
 void colorGrpISR(){
   
   //quick debounce delay
-  delayMicroseconds(50000);
+  delayMicroseconds(100000);
   
   buttonPress = 1;
 
@@ -246,9 +246,10 @@ void nextTheme(){
       break;
     case 1:
       //Winter
-      colorList[0] = 0x00000002;
-      colorList[1] = 0x0087CEEB;  //SkyBlue
-      colorList[2] = 0x00FFFFFF;  //White
+      colorList[0] = 0x00000003;
+      colorList[1] = 0x004169E1;  //RoyalBlue
+      colorList[2] = 0x00FAFAFA;  //Snow
+      colorList[3] = 0x000000CD;  //MediumBlue
       minLED = (NUM_LEDS*2)/3;
       break;
     case 2:
