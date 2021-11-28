@@ -10,10 +10,15 @@ $fa = 1;
 $fs = 0.4;
 
 //PARAMETERS
-radius = 40;
-height = 100;
-wall_thickness = 2;
-cut_thickness = 67;
+jar_mouth = 58.6;
+led_depth = 2.2;
+radius = (jar_mouth + led_depth - 2)/2;
+height = 158;
+wall_thickness = 1.6;
+cut_thickness = 81.5;
+support_angle = 20.0;
+ring_support_height = height/7;
+ring_support_translate = sqrt(0.5*(radius-1)^2) + 0.10;
 
 
 //MODEL
@@ -49,12 +54,12 @@ scale([1, 1, 1]) {
         
         //side cut one
         translate([0, -45, 0])
-        rotate([38, 0, 0])
+        rotate([support_angle, 0, 0])
         cube(size = [2.05*(radius + wall_thickness), cut_thickness, 2*height], center = true);
         
         //side cut two
         translate([0, 45, 0])
-        rotate([38, 0, 0])
+        rotate([support_angle, 0, 0])
         cube(size = [2.05*(radius + wall_thickness), cut_thickness, 2*height], center = true);
     }
 
@@ -71,12 +76,12 @@ scale([1, 1, 1]) {
         
         //side cut one
         translate([0, -45, 0])
-        rotate([-38, 0, 0])
+        rotate([-support_angle, 0, 0])
         cube(size = [2.05*(radius + wall_thickness), cut_thickness, 2*height], center = true);
         
         //side cut two
         translate([0, 45, 0])
-        rotate([-38, 0, 0])
+        rotate([-support_angle, 0, 0])
         cube(size = [2.05*(radius + wall_thickness), cut_thickness, 2*height], center = true);
     }
 
@@ -93,12 +98,12 @@ scale([1, 1, 1]) {
         
         //side cut one
         translate([-45, 0, 0])
-        rotate([38, 0, 90])
+        rotate([support_angle, 0, 90])
         cube(size = [2.05*(radius + wall_thickness), cut_thickness, 2*height], center = true);
         
         //side cut two
         translate([45, 0, 0])
-        rotate([38, 0, 90])
+        rotate([support_angle, 0, 90])
         cube(size = [2.05*(radius + wall_thickness), cut_thickness, 2*height], center = true);
     }
 
@@ -115,12 +120,30 @@ scale([1, 1, 1]) {
         
         //side cut one
         translate([-45, 0, 0])
-        rotate([-38, 0, 90])
+        rotate([-support_angle, 0, 90])
         cube(size = [2.05*(radius + wall_thickness), cut_thickness, 2*height], center = true);
         
         //side cut two
         translate([45, 0, 0])
-        rotate([-38, 0, 90])
+        rotate([-support_angle, 0, 90])
         cube(size = [2.05*(radius + wall_thickness), cut_thickness, 2*height], center = true);
     }
+    
+    //top ring supports
+    translate([ring_support_translate, ring_support_translate, height/2 - ring_support_height/2])
+    rotate([0, 0, -45])
+    cube(size = [wall_thickness*2, wall_thickness, ring_support_height], center = true);
+    
+    translate([-ring_support_translate, -ring_support_translate, height/2 - ring_support_height/2])
+    rotate([0, 0, -45])
+    cube(size = [wall_thickness*2, wall_thickness, ring_support_height], center = true);
+    
+    translate([ring_support_translate, -ring_support_translate, height/2 - ring_support_height/2])
+    rotate([0, 0, 45])
+    cube(size = [wall_thickness*2, wall_thickness, ring_support_height], center = true);
+    
+    translate([-ring_support_translate, ring_support_translate, height/2 - ring_support_height/2])
+    rotate([0, 0, 45])
+    cube(size = [wall_thickness*2, wall_thickness, ring_support_height], center = true);  
+    
 }//end scale
