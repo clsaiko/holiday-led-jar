@@ -21,7 +21,9 @@ support_angle = 20.0;
 ring_support_height = height/7;
 ring_support_translate = sqrt(0.5*(radius-1)^2) - 0.18;
 board_guide_translate = ring_support_translate - 3.1;
+board_stop_translate = ring_support_translate - 3.1;
 pcb_board_thickness = 1.8;
+
 
 
 //MODEL
@@ -44,6 +46,67 @@ scale([1, 1, 1]) {
         cylinder(h = height - 2*wall_thickness, r = radius + 2*wall_thickness, center = true);
     }
 
+
+    //bottom charger strap
+    translate([0, 0, -height/2 + wall_thickness/2])
+    rotate([0, 0, -45])
+    cube(size = [wall_thickness*4.0, radius * 1.9, wall_thickness], center = true);
+    
+    //battery rest
+    translate([radius/3, -radius/3, -height/2 + wall_thickness/2])
+    rotate([0, 0, 45])
+    cube(size = [wall_thickness*4.0, (radius * 1.9)/2, wall_thickness], center = true);
+    
+    //battery stop
+    translate([0.8, -0.8, -height/2 + wall_thickness])
+    rotate([0, 0, -45])
+    cube(size = [wall_thickness*1.0, radius * 1.0, wall_thickness*2.0], center = true);
+
+
+    //charger pcb mount one
+    translate([ring_support_translate/3, -ring_support_translate*1.26, height/2 - wall_thickness])
+    rotate([90, 0, 45])
+    difference(){
+        union(){
+            cylinder(h = wall_thickness*3.0, r = wall_thickness, center = true);
+            translate([0, -3, 0])
+            cube(size = [wall_thickness*1.0, wall_thickness*4.0, wall_thickness*3.0], center = true);
+        }
+        //hole
+        cylinder(h = wall_thickness*4.0, r = wall_thickness/3, center = true);
+        //outside
+        translate([-2.5, 0, 6])
+        rotate([0, 55, 0])
+        cube(size = [wall_thickness*3.0, wall_thickness*3.0, wall_thickness*3.0], center = true);
+        //support
+        translate([0, -12, -0.4])
+        rotate([45, 0, 0])
+        cube(size = [wall_thickness*1.1, wall_thickness*4.0, wall_thickness*8.0], center = true);
+    }
+    
+    //charger pcb mount two
+    translate([ring_support_translate*1.26, -ring_support_translate/3, height/2 - wall_thickness])
+    rotate([90, 0, 45])
+    difference(){
+        union(){
+            cylinder(h = wall_thickness*3.0, r = wall_thickness, center = true);
+            translate([0, -3, 0])
+            cube(size = [wall_thickness*1.0, wall_thickness*4.0, wall_thickness*3.0], center = true);
+        }
+        //hole
+        cylinder(h = wall_thickness*4.0, r = wall_thickness/3, center = true);
+        //outside
+        translate([2.5, 0, 6])
+        rotate([0, 35, 0])
+        cube(size = [wall_thickness*3.0, wall_thickness*3.0, wall_thickness*3.0], center = true);
+        //support
+        translate([0, -12, -0.4])
+        rotate([45, 0, 0])
+        cube(size = [wall_thickness*1.1, wall_thickness*4.0, wall_thickness*8.0], center = true);
+    }
+
+   
+    
     //MAIN BOARD GUIDES
     difference(){
         union(){
@@ -69,11 +132,11 @@ scale([1, 1, 1]) {
         
         //guide interior cuts
         translate([board_guide_translate - 2.0, board_guide_translate - 2.0, height/2 - ring_support_height*1.35])
-        rotate([-50, 0, -45])
+        rotate([-80, 0, -45])
         cube(size = [wall_thickness*4.0, wall_thickness*4.0, wall_thickness*2.0], center = true);
 
         translate([-board_guide_translate + 2.0, -board_guide_translate + 2.0, height/2 - ring_support_height*1.35])
-        rotate([50, 0, -45])
+        rotate([80, 0, -45])
         cube(size = [wall_thickness*4.0, wall_thickness*4.0, wall_thickness*2.0], center = true);        
        
     }
@@ -85,12 +148,12 @@ scale([1, 1, 1]) {
     difference(){
         union(){
             // main board guide one
-            translate([board_guide_translate, board_guide_translate, height/2 - ring_support_height*1.25])
+            translate([board_stop_translate, board_stop_translate, height/2 - ring_support_height*1.25])
             rotate([75, 0, -45])
             cube(size = [wall_thickness*2.6, wall_thickness*3.0, ring_support_height/3], center = true);
 
             // main board guide two
-            translate([-board_guide_translate, -board_guide_translate, height/2 - ring_support_height*1.25])
+            translate([-board_stop_translate, -board_stop_translate, height/2 - ring_support_height*1.25])
             rotate([-75, 0, -45])
             cube(size = [wall_thickness*2.6, wall_thickness*3.0, ring_support_height/3], center = true);
         }
@@ -105,20 +168,20 @@ scale([1, 1, 1]) {
         cube(size = [wall_thickness*6.0, radius*2.1, wall_thickness*1.2], center = true);
         
         //guide interior cuts
-        translate([board_guide_translate - 2.0, board_guide_translate - 2.0, height/2 - ring_support_height*1.35])
+        translate([board_stop_translate - 2.0, board_stop_translate - 2.0, height/2 - ring_support_height*1.35])
         rotate([-50, 0, -45])
         cube(size = [wall_thickness*4.0, wall_thickness*4.0, wall_thickness*2.0], center = true);
 
-        translate([-board_guide_translate + 2.0, -board_guide_translate + 2.0, height/2 - ring_support_height*1.35])
+        translate([-board_stop_translate + 2.0, -board_stop_translate + 2.0, height/2 - ring_support_height*1.35])
         rotate([50, 0, -45])
         cube(size = [wall_thickness*4.0, wall_thickness*4.0, wall_thickness*2.0], center = true);
         
         //guide exterior cuts
-        translate([board_guide_translate + 2.6, board_guide_translate + 2.6, height/2 - ring_support_height*1.3])
+        translate([board_stop_translate + 2.6, board_stop_translate + 2.6, height/2 - ring_support_height*1.3])
         rotate([0, 0, -45])
         cube(size = [wall_thickness*4.0, wall_thickness*2.0, wall_thickness*4.0], center = true);
         
-        translate([-board_guide_translate - 2.6, -board_guide_translate - 2.6, height/2 - ring_support_height*1.3])
+        translate([-board_stop_translate - 2.6, -board_stop_translate - 2.6, height/2 - ring_support_height*1.3])
         rotate([0, 0, -45])
         cube(size = [wall_thickness*4.0, wall_thickness*2.0, wall_thickness*4.0], center = true); 
        
