@@ -64,7 +64,7 @@ scale([1, 1, 1]) {
 
 
     //charger pcb mount one
-    translate([ring_support_translate/3, -ring_support_translate*1.26, height/2 - wall_thickness])
+    translate([ring_support_translate/4, -ring_support_translate*1.28, height/2 - wall_thickness])
     rotate([90, 0, 45])
     difference(){
         union(){
@@ -82,10 +82,14 @@ scale([1, 1, 1]) {
         translate([0, -12, -0.4])
         rotate([45, 0, 0])
         cube(size = [wall_thickness*1.1, wall_thickness*4.0, wall_thickness*8.0], center = true);
+        //exterior cut
+        translate([0, -5.4, 4.2])
+        rotate([35, 155, 90])
+        cube(size = [wall_thickness*2.6, wall_thickness*3.0, wall_thickness*1.0], center = true);         
     }
     
     //charger pcb mount two
-    translate([ring_support_translate*1.26, -ring_support_translate/3, height/2 - wall_thickness])
+    translate([ring_support_translate*1.28, -ring_support_translate/4, height/2 - wall_thickness])
     rotate([90, 0, 45])
     difference(){
         union(){
@@ -103,9 +107,12 @@ scale([1, 1, 1]) {
         translate([0, -12, -0.4])
         rotate([45, 0, 0])
         cube(size = [wall_thickness*1.1, wall_thickness*4.0, wall_thickness*8.0], center = true);
+        translate([0, -5.7, 4.5])
+        rotate([35, 35, 25])
+        cube(size = [wall_thickness*2.5, wall_thickness*3.0, wall_thickness*1.0], center = true);        
     }
 
-   
+  
     
     //MAIN BOARD GUIDES
     difference(){
